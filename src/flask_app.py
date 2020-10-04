@@ -6,28 +6,25 @@ import time
 import datetime
 
 DELTA_UPDATE_TIME=600
-
 data=[]
 lastUpdateTime=datetime.datetime.now()
 timestr=datetime.datetime.now().__str__()
-print(timestr)
 stats={"apiupdatetime":timestr}
 time.sleep(3)
 print(timestr)
 
 def updateDataSet():
+    '''
+    download the dataset only on request and if update was long ago (DELTA_UPDATE_TIME)
+    '''
     global data
     global stats
     global lastUpdateTime
-    #print(datetime.datetime.now().__str__())
-    #print(datetime.datetime.now()-lastUpdateTime)
     # only update if last update is old
     if (datetime.datetime.now()-lastUpdateTime) > datetime.timedelta(seconds=DELTA_UPDATE_TIME) or data==[]:
         print("update dataset")
         with urllib.request.urlopen(coronasource) as url:
             data = json.loads(url.read().decode())
-            #data=datatmp.copy()
-            #print(data)
             lastUpdateTime=datetime.datetime.now()
             stats["apiupdatetime"]=datetime.datetime.now().__str__()
             print("updateDataSet(): " + stats["apiupdatetime"])
@@ -37,25 +34,12 @@ def updateDataSet():
 
 
 app = Flask(__name__)
-coronasource="https://corona-ampel.gv.at/sites/corona-ampel.gv.at/files/coronadata/CoronaKommissionV2.json"
+coronasource="https://corona-ampel.gv.at/sites/corona-ampel.gv.at/files/assets/Warnstufen_Corona_Ampel_Gemeinden_aktuell.json"
 lastUpdateTime=datetime.datetime.now()-datetime.timedelta(seconds=DELTA_UPDATE_TIME+10)
 print("start data update")
-#odcu=OpenDataCoronaUpdate()
-#print("Wait")
-#time.sleep(3)
-#print(odcu.data["VersionDate"])
-# set pointer
 updateDataSet()
-#print(data)
 print("update done: " + stats["apiupdatetime"])
-#app.odcu=odcu
-#data=odcu.data
-#last_update_time_str=odcu.last_update_time_str
-#print(odcu.last_update_time_str)
-#print("pointer")
-#print(data["VersionDate"])
-#odcu.data["Test"]="asdf"
-#print(data["Test"])
+print("flask web app should be running now...")
 
 @app.route('/updatetime')
 def updatetime():
@@ -65,8 +49,8 @@ def updatetime():
     print("updatetime done " + stats["apiupdatetime"])
     return ("api polled data the last time at: " + stats["apiupdatetime"])
 
-@app.route('/hi')
-def hi():
+@app.route('/time')
+def time():
     mystr="hi  - it is " + datetime.datetime.now().__str__()
     return mystr
 
@@ -77,12 +61,11 @@ def web_root():
     <br>
     some examples:<br>
 
-    <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/warnname/Steyr ... {"Begruendung":"","GKZ":"40201","KW":38,"Name":"Steyr","Region":"Gemeinde","Warnstufe":"2"}
-    <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/warngkz/3 ... {"Begruendung":"","GKZ":"3","KW":38,"Name":"Nieder\u00f6sterreich","Region":"Bundesland","Warnstufe":"1"}
+    <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/name/Steyr ... {"GKZ":"40201","2020-10-01T19:30:00Z",""Name":"Steyr","Region":"Gemeinde","Warnstufe":"2"}
+    <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/gkz/10308 ... {"GKZ":"3","Stand": "2020-10-01T19:30:00Z","Name":"Nieder\u00f6sterreich","Region":"Bundesland","Warnstufe":"1"}
     <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/data ... full original dataset from source
-    <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/source ... https://corona-ampel.gv.at/sites/corona-ampel.gv.at/files/coronadata/CoronaKommissionV2.json
+    <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/source ... https://corona-ampel.gv.at/sites/corona-ampel.gv.at/files/assets/Warnstufen_Corona_Ampel_Gemeinden_aktuell.json
     <br>
-    I've no idea if this dataset is maintained :-) but latest calender week is the current week (while developing)
     """
     return str
 
@@ -111,7 +94,7 @@ automation:<br>
     # simple homeassistant rest sensor configuration for corona warning system<br>
     sensor:<br>
     &nbsp;&nbsp;  - platform: rest<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;resource: http://lein1013.pythonanywhere.com/v1/corona_aut_api/warnname/Enns<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;resource: http://lein1013.pythonanywhere.com/v1/corona_aut_api/name/Enns<br>
     &nbsp;&nbsp;&nbsp;&nbsp;    method: GET<br>
     &nbsp;&nbsp;&nbsp;&nbsp;    scan_interval: 600<br>
     &nbsp;&nbsp;&nbsp;&nbsp;    value_template: '{{value_json.Warnstufe}}'<br>
@@ -122,69 +105,37 @@ automation:<br>
 @app.route('/v1/corona_aut_api/data')
 def v1_corona_data():
     updateDataSet()
-    #print(data)
-    return data
-
-@app.route('/v1/corona_aut_api/versionsnr')
-def v1_corona_versionsnr():
-    updateDataSet()
-    return data["VersionsNr"]
+    return json.dumps(data)
 
 @app.route('/v1/corona_aut_api/source')
 def v1_corona_source():
     return coronasource
 
-
-
-def getWarnFromGkz(data,gkz):
-    warnlist=data["Kalenderwochen"][0]["Warnstufen"]
-    for warn in warnlist:
-        if warn["GKZ"]==str(gkz):
-            return warn
-    return "na"
-
-def getRegionFromGkz(data,gkz):
-    regionlist=data["Regionen"]
-    for region in regionlist:
-        if region["GKZ"]==str(gkz):
-            return region
-    return "na"
-
-@app.route('/v1/corona_aut_api/warngkz/<gkz>')
-def v1_corona_warngkz(gkz):
+@app.route('/v1/corona_aut_api/gkz/<gkz>')
+def v1_corona_warnlevel_by_gkz(gkz):
+    ''' 
+    just use the gkz to get the warning level
+    '''
     updateDataSet()
     global data
-    ret={"KW":data["Kalenderwochen"][0]["KW"]}
-    tmp={"GKZ":gkz}
-    ret.update(tmp)
-    ret.update(getWarnFromGkz(data,gkz))
-    ret.update(getRegionFromGkz(data,gkz))
-    return ret
+    warnlevelist=data[0]["Warnstufen"]
+    for warnlevel in warnlevelist:
+        if warnlevel["GKZ"]==str(gkz):
+            ret={"Stand":data[0]["Stand"]}
+            ret.update(warnlevel)
+            return ret 
 
-@app.route('/v1/corona_aut_api/warnregionname/<region>/<name>')
-def v1_corona_warnregionname(region,name):
+@app.route('/v1/corona_aut_api/name/<name>')
+def v1_corona_warnlevel_by_Name(name):
+    ''' 
+    just use the name to get the warning level
+    '''
     updateDataSet()
     global data
-    #return(region) #debug
-    regionlist=data["Regionen"]
-    #return(regionlist)
-    for region in regionlist:
-        #if region["Region"]==str(region):
-        if region["Name"]==str(name):
-            gkz=region["GKZ"]
-            print(gkz)
-            #return gkz
-            return v1_corona_warngkz(gkz)
-    return "na"
-
-@app.route('/v1/corona_aut_api/warnname/<name>')
-def v1_corona_warnname(name):
-    updateDataSet()
-    print(name)
-    global data
-    regionlist=data["Regionen"]
-    for region in regionlist:
-        if region["Name"]==str(name):
-            gkz=region["GKZ"]
-            return v1_corona_warngkz(gkz)
+    warnlevelist=data[0]["Warnstufen"]
+    for warnlevel in warnlevelist:
+        if warnlevel["Name"]==str(name):
+            ret={"Stand":data[0]["Stand"]}
+            ret.update(warnlevel)
+            return ret 
     return "na"
