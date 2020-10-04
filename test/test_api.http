@@ -1,25 +1,12 @@
-#### In Progress
+#### local api urls
 ### get verison
-http://lein1013.pythonanywhere.com/v1/corona_aut_api/versionnr
+http://lein1013.pythonanywhere.com/v1/corona_aut_api/source
 #### Working
 ### Get Source
-http://lein1013.pythonanywhere.com/v1/corona_aut_api/source
+http://lein1013.pythonanywhere.com/v1/corona_aut_api/data
 
 ### Get Data
-http://lein1013.pythonanywhere.com/v1/corona_aut_api/data
+http://lein1013.pythonanywhere.com/v1/corona_aut_api/name/Steyr
 ###
-http://lein1013.pythonanywhere.com/v1/corona_aut_api/warnregionname/Bezirk/Eisenstadt(Stadt)
+http://lein1013.pythonanywhere.com/v1/corona_aut_api/gkz/10308
 ### 
-http://lein1013.pythonanywhere.com/v1/corona_aut_api/warnregionname/Bezirk/Jennersdorf
-# soll 105
-###
-http://lein1013.pythonanywhere.com/v1/corona_aut_api/warnregionname/Bezirk/Steyr(Stadt)
-###
-http://lein1013.pythonanywhere.com/v1/corona_aut_api/warnname/Steyr(Stadt)
-###
-http://lein1013.pythonanywhere.com/v1/corona_aut_api/warnname/Steyr
-###
-http://lein1013.pythonanywhere.com/v1/corona_aut_api/warngkz/5
-###
-http://lein1013.pythonanywhere.com/v1/corona_aut_api/warngkz/80301
-
