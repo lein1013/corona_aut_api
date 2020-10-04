@@ -1,0 +1,25 @@
+#### In Progress
+### get verison
+http://127.0.0.1:5000/v1/corona_aut_api/versionnr
+#### Working
+### Get Source
+http://127.0.0.1:5000/v1/corona_aut_api/data
+
+### Get Data
+http://127.0.0.1:5000/v1/corona_aut_api/data
+###
+http://127.0.0.1:5000/v1/corona_aut_api/warnregionname/Bezirk/Eisenstadt(Stadt)
+### 
+http://127.0.0.1:5000/v1/corona_aut_api/warnregionname/Bezirk/Jennersdorf
+# soll 105
+###
+http://127.0.0.1:5000/v1/corona_aut_api/warnregionname/Bezirk/Steyr(Stadt)
+###
+http://127.0.0.1:5000/v1/corona_aut_api/warnname/Steyr(Stadt)
+###
+http://127.0.0.1:5000/v1/corona_aut_api/warnname/Steyr
+###
+http://127.0.0.1:5000/v1/corona_aut_api/warngkz/5
+###
+http://127.0.0.1:5000/v1/corona_aut_api/warngkz/80301
+
