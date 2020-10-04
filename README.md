@@ -7,7 +7,7 @@ The data is provided as large json dataset by the austrian goverment and updated
 For most applications only a very reduced dataset is needed, e.g. just the warning level of a specific city. 
 This webservice downloads, caches and preprocesses the json dataset and only provides the relevant data to the requester.
 
-see test for 
+see test for possible api urls
 
 
 ## Links
