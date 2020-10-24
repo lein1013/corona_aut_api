@@ -1,17 +1,19 @@
 # Corona Austria API
-# 
+#
 from flask import Flask
-import urllib.request, json
+import urllib.request
+import json
 import time
 import datetime
 
-DELTA_UPDATE_TIME=600
-data=[]
-lastUpdateTime=datetime.datetime.now()
-timestr=datetime.datetime.now().__str__()
-stats={"apiupdatetime":timestr}
+DELTA_UPDATE_TIME = 600  # change update interval here
+data = []
+lastUpdateTime = datetime.datetime.now()
+timestr = datetime.datetime.now().__str__()
+stats = {"apiupdatetime": timestr}
 time.sleep(3)
 print(timestr)
+
 
 def updateDataSet():
     '''
@@ -21,12 +23,12 @@ def updateDataSet():
     global stats
     global lastUpdateTime
     # only update if last update is old
-    if (datetime.datetime.now()-lastUpdateTime) > datetime.timedelta(seconds=DELTA_UPDATE_TIME) or data==[]:
+    if (datetime.datetime.now()-lastUpdateTime) > datetime.timedelta(seconds=DELTA_UPDATE_TIME) or data == []:
         print("update dataset")
         with urllib.request.urlopen(coronasource) as url:
             data = json.loads(url.read().decode())
-            lastUpdateTime=datetime.datetime.now()
-            stats["apiupdatetime"]=datetime.datetime.now().__str__()
+            lastUpdateTime = datetime.datetime.now()
+            stats["apiupdatetime"] = datetime.datetime.now().__str__()
             print("updateDataSet(): " + stats["apiupdatetime"])
     else:
         print("no update due to time delta")
@@ -34,44 +36,58 @@ def updateDataSet():
 
 
 app = Flask(__name__)
-coronasource="https://corona-ampel.gv.at/sites/corona-ampel.gv.at/files/assets/Warnstufen_Corona_Ampel_Gemeinden_aktuell.json"
-lastUpdateTime=datetime.datetime.now()-datetime.timedelta(seconds=DELTA_UPDATE_TIME+10)
+coronasource = "https://corona-ampel.gv.at/sites/corona-ampel.gv.at/files/assets/Warnstufen_Corona_Ampel_Gemeinden_aktuell.json"
+lastUpdateTime = datetime.datetime.now()-datetime.timedelta(seconds=DELTA_UPDATE_TIME+10)
 print("start data update")
 updateDataSet()
 print("update done: " + stats["apiupdatetime"])
 print("flask web app should be running now...")
 
-@app.route('/updatetime')
+
+@app.route('/v1/corona_aut_api/updatetime')
 def updatetime():
+    '''
+    returns the time when the data was downloaded the last time from the source url
+    '''
     global stats
-    #updateDataSet()
-    #return "api polled data the last time at: " + self.odcu.last_update_time_str
-    print("updatetime done " + stats["apiupdatetime"])
     return ("api polled data the last time at: " + stats["apiupdatetime"])
 
-@app.route('/time')
+
+@app.route('/v1/corona_aut_api/time')
 def time():
-    mystr="hi  - it is " + datetime.datetime.now().__str__()
+    '''
+    return the current time of the server
+    '''
+    mystr = "The current time is: " + datetime.datetime.now().__str__()
     return mystr
+
 
 @app.route('/')
 def web_root():
-    str="""
+    '''
+    return a minimal page with examples
+    '''
+    str = """
     <h1>Simple Corona AT json 2 API Wrapper</h1>
     <br>
     some examples:<br>
-
     <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/name/Steyr ... {"GKZ":"40201","2020-10-01T19:30:00Z",""Name":"Steyr","Region":"Gemeinde","Warnstufe":"2"}
     <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/gkz/10308 ... {"GKZ":"3","Stand": "2020-10-01T19:30:00Z","Name":"Nieder\u00f6sterreich","Region":"Bundesland","Warnstufe":"1"}
     <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/data ... full original dataset from source
     <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/source ... https://corona-ampel.gv.at/sites/corona-ampel.gv.at/files/assets/Warnstufen_Corona_Ampel_Gemeinden_aktuell.json
+    <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/updatetime ... returns the time when the dataset was downloaded the last time
+    <br>http://lein1013.pythonanywhere.com/v1/corona_aut_api/homeassistant ... returns example for a homeassistant config
     <br>
     """
     return str
 
+
 @app.route('/v1/corona_aut_api/homeassistant')
 def v1_corona_homeassistant():
-    str="""
+    '''
+    return some homeassistant configuration example
+    '''
+    str = """
     # turn on a ligth with the related corona ampel color for the selected region<br>
     # change light name and Corona region<br>
 automation:<br>
@@ -99,43 +115,60 @@ automation:<br>
     &nbsp;&nbsp;&nbsp;&nbsp;    scan_interval: 600<br>
     &nbsp;&nbsp;&nbsp;&nbsp;    value_template: '{{value_json.Warnstufe}}'<br>
     &nbsp;&nbsp;&nbsp;&nbsp;    name: "Enns Corona Ampel"<br>
+    &nbsp;&nbsp;  - platform: rest<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;resource: http://lein1013.pythonanywhere.com/v1/corona_aut_api/name/Enns<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;    method: GET<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;    scan_interval: 600<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;    value_template: '{{value_json.Stand}}'<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;    name: "Last Update Corona Ampel"<br>
     """
     return str
 
+
 @app.route('/v1/corona_aut_api/data')
 def v1_corona_data():
+    '''
+    return the full dataset as json string dump
+    '''
     updateDataSet()
     return json.dumps(data)
 
+
 @app.route('/v1/corona_aut_api/source')
 def v1_corona_source():
+    '''
+    return the url of the data source
+    '''
     return coronasource
+
 
 @app.route('/v1/corona_aut_api/gkz/<gkz>')
 def v1_corona_warnlevel_by_gkz(gkz):
     ''' 
-    just use the gkz to get the warning level
+    use the gkz to get the warning level
     '''
     updateDataSet()
     global data
-    warnlevelist=data[0]["Warnstufen"]
+    # 0 should always be the latest dataset
+    warnlevelist = data[0]["Warnstufen"]
     for warnlevel in warnlevelist:
-        if warnlevel["GKZ"]==str(gkz):
-            ret={"Stand":data[0]["Stand"]}
+        if warnlevel["GKZ"] == str(gkz):
+            ret = {"Stand": data[0]["Stand"]}
             ret.update(warnlevel)
-            return ret 
+            return ret
+
 
 @app.route('/v1/corona_aut_api/name/<name>')
 def v1_corona_warnlevel_by_Name(name):
     ''' 
-    just use the name to get the warning level
+    use the name to get the warning level
     '''
     updateDataSet()
     global data
-    warnlevelist=data[0]["Warnstufen"]
+    warnlevelist = data[0]["Warnstufen"]
     for warnlevel in warnlevelist:
-        if warnlevel["Name"]==str(name):
-            ret={"Stand":data[0]["Stand"]}
+        if warnlevel["Name"] == str(name):
+            ret = {"Stand": data[0]["Stand"]}
             ret.update(warnlevel)
-            return ret 
+            return ret
     return "na"

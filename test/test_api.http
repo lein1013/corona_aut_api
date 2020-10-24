@@ -1,12 +1,25 @@
-#### local api urls
-### get verison
+#### api urls on pythonanywhere
+
+### Get source url
 http://lein1013.pythonanywhere.com/v1/corona_aut_api/source
-#### Working
-### Get Source
+
+### Get the json data from source
 http://lein1013.pythonanywhere.com/v1/corona_aut_api/data
 
-### Get Data
-http://lein1013.pythonanywhere.com/v1/corona_aut_api/name/Steyr
-###
+### Get Data by Name
+http://lein1013.pythonanywhere.com/v1/corona_aut_api/name/Linz
+
+### Request with GKZ code
 http://lein1013.pythonanywhere.com/v1/corona_aut_api/gkz/10308
-### 
+
+### Get last update time (download of full dataset)
+http://lein1013.pythonanywhere.com/v1/corona_aut_api/updatetime 
+
+### Get the current server time
+http://lein1013.pythonanywhere.com/v1/corona_aut_api/time
+
+### Get a configuration example for homeassistant
+http://lein1013.pythonanywhere.com/v1/corona_aut_api/homeassistant
+
+### root folder 
+http://lein1013.pythonanywhere.com/
